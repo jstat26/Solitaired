@@ -9,13 +9,13 @@ library(tidyverse)
 #looping through different days instead of just defining one day.
 
 #TYPE IN THE NAME OF THE DATE YOU ARE INTERESTED IN AS "%m-%d-%Y"
-dateOfInterest <- as.Date(c("07-30-2024","07-31-2024","08-01-2024"), format = "%m-%d-%Y")
+dateOfInterest <- as.Date(c("08-10-2024","08-11-2024"), format = "%m-%d-%Y")
 #if you are interested in running multiple days at once using a single data
 #dump, instead, enter these as a list separated by commas.
 
 #CHANGE THESE TO THE NAME OF THE DATA DUMP FILES
-data_SOL <- read_csv("in/Solitaired/researchstudy-8-2-24-11-35 AM.csv")
-data_TMB <- read_csv("in/TMB/solitairecog_data_20240802213231.csv")
+data_SOL <- read_csv("in/Solitaired/researchstudy-8-12-24-3-05 PM.csv")
+data_TMB <- read_csv("in/TMB/solitairecog_data_20240813031709.csv")
 
 for(i in dateOfInterest){
   rmarkdown::render(input = "dataChecking.Rmd",

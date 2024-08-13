@@ -110,6 +110,16 @@ data_SOL_parsed_comparison %>% filter(status_SOL != "geo") %>%  group_by(status_
 
 ```
 
+# How many of the users were registered?
+
+```{r}
+
+data_SOL_parsed_comparison_registered <- data_SOL_parsed_comparison %>% filter(status_SOL != "geo")   
+
+kable(table(data_SOL_parsed_comparison_registered$status_SOL,data_SOL_parsed_comparison_registered$newRegistrationUser_SOL)) %>% kable_styling()
+
+```
+
 # Distribution of TMB tests
 
 ```{r}

@@ -1,0 +1,115 @@
+---
+title: "Full Data Compile"
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(jsonlite) #we use this package to parse the JSON columns
+library(kableExtra)
+
+data_SOL <- read_csv("in/Solitaired/researchstudy-8-12-24-3-05 PM.csv")
+data_TMB <- read_csv("in/TMB/solitairecog_data_20240813034612.csv")
+
+```
+
+# Introduction
+
+
+# Formatting and Merging Data
+
+```{r, message = FALSE, results='hide'}
+
+#read in the list of games of the day
+gotdSeeds <- read_csv("warmed-up-gotd.csv") 
+
+#Expand JSON columns in Solitaired dataset
+data_SOL_parsed <- data_SOL %>% 
+  bind_cols(stream_in(textConnection(gsub("\\n", "", data_SOL$data)))) %>% 
+  bind_cols(.$user) %>% #user is saved as a dataframe within the dataframe, so we just unlist it
+  bind_cols(.$questionnaireData) %>% #same for the questionaire data
+  select(-c(data, user, questionnaireData)) %>%  #remove the columns that we no longer need
+  left_join(gotdSeeds, by = "seed") %>% 
+  rename_with(~ paste0(., "_SOL")) #adding a suffix to the end of each column name to make differentiating variables easier after merging
+
+#Expand JSON columns in TMB dataset
+data_TMB_parsed <- data_TMB %>% 
+  bind_cols(stream_in(textConnection(gsub("\\n", "", data_TMB$test_params))),
+            stream_in(textConnection(gsub("\\n", "", data_TMB$device_scan))),
+            stream_in(textConnection(gsub("\\n", "", data_TMB$outcomes))),
+            stream_in(textConnection(gsub("\\n", "", data_TMB$URL_params)))) %>% 
+  select(-c(test_params,device_scan,outcomes,URL_params)) %>% 
+  rename_with(~ paste0(., "_TMB")) %>% #same idea, add a suffix for ease of interpretation
+  mutate(tmbUserId_SOL = user_id_TMB) #changing the name of this ID variable for merging
+
+#merging Solitaired and TMB datasets based on the "tmbUserID" column
+#here I am using a left merge, so that we only end up with participants who took the TMB tests
+merged_SOL_TMB <- data_TMB_parsed %>% left_join(data_SOL_parsed, by = "tmbUserId_SOL") %>% filter(!is.na(game_id_SOL))
+
+#writing the combined dataset, saved with the most recent TMB date
+write.csv(merged_SOL_TMB, "out/fullData.csv")
+
+```
+
+# Checking number of total cases
+
+```{r}
+
+nCases <- nrow(merged_SOL_TMB)
+
+```
+
+There were `r nCases` TMB tests taken. They took place at the following times:
+
+```{r}
+
+merged_SOL_TMB %>% mutate(Hour = format(as.POSIXct(merged_SOL_TMB$statsCreatedAt_SOL, format="%m/%d/%Y %H:%M", tz="UTC"), "%H")) %>% group_by(Hour) %>% summarize(Frequency = n(), Proportion = round(n()/nCases,2)) %>% kable() %>% kable_styling()
+
+```
+
+# How many of the users were registered?
+
+```{r}
+
+kable(table(merged_SOL_TMB$newRegistrationUser_SOL)) %>% kable_styling()
+
+```
+
+# Distribution of TMB tests
+
+```{r}
+
+merged_SOL_TMB %>% group_by(test_name_TMB) %>% summarize(Frequency = n(), Proportion = round(n()/nCases,2)) %>% kable() %>% kable_styling()
+
+```
+
+# Expected variability in items response, in game data
+
+```{r}
+
+ggplot(merged_SOL_TMB, aes(x = completion_time_SOL)) + geom_boxplot() + coord_flip() + ggtitle("Range of Completion Times")
+ggplot(merged_SOL_TMB, aes(x = undoCount_SOL)) + geom_boxplot() + coord_flip() + ggtitle("Range of Undo Counts")
+ggplot(merged_SOL_TMB, aes(x = hintCount_SOL)) + geom_boxplot() + coord_flip() + ggtitle("Range of Hint Counts")
+ggplot(merged_SOL_TMB, aes(x = hkMoveCount_SOL)) + geom_boxplot() + coord_flip() + ggtitle("Range of Hotkey Move Counts")
+ggplot(merged_SOL_TMB, aes(x = autoMoveCount_SOL)) + geom_boxplot() + coord_flip() + ggtitle("Range of Auto Move Counts")
+
+```
+
+# Variability in survey data 
+
+```{r}
+
+kable(table(merged_SOL_TMB$age_SOL),col.names = c("Age", "Freq.")) %>% kable_styling()
+kable(table(merged_SOL_TMB$gender_SOL),col.names = c("Gender", "Freq.")) %>% kable_styling()
+kable(table(merged_SOL_TMB$cognitiveImpairment_SOL),col.names = c("Cognitive Impairment", "Freq.")) %>% kable_styling()
+
+```
+
+
+
