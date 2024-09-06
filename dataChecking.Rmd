@@ -110,21 +110,30 @@ data_SOL_parsed_comparison %>% filter(status_SOL != "geo") %>%  group_by(status_
 
 ```
 
-# How many of the users were registered?
+# How many of the users were unregistered?
 
 ```{r}
 
-data_SOL_parsed_comparison_registered <- data_SOL_parsed_comparison %>% filter(status_SOL != "geo")   
-
-kable(table(data_SOL_parsed_comparison_registered$status_SOL,data_SOL_parsed_comparison_registered$newRegistrationUser_SOL)) %>% kable_styling()
+kable(table(merged_SOL_TMB$newRegistrationUser_SOL)) %>% kable_styling()
 
 ```
+
+This makes up `r round(100*sum(merged_SOL_TMB$newRegistrationUser_SOL,na.rm=TRUE)/nrow(merged_SOL_TMB),2)`% of the daily cases.
 
 # Distribution of TMB tests
 
 ```{r}
 
-merged_SOL_TMB_2 %>% group_by(test_name_TMB) %>% summarize(Frequency = n(), Proportion = round(n()/nCases,2)) %>% kable() %>% kable_styling()
+merged_SOL_TMB_2 %>% group_by(test_name_TMB) %>% summarize(Frequency = n(), 'Mean Length' = mean(duration...17_TMB),  Proportion = round(n()/nCases,2)) %>% kable() %>% kable_styling()
+
+```
+
+# Distribution of TMB test lengths
+
+```{r}
+
+ggplot(merged_SOL_TMB_2, aes(x=duration...17_TMB, fill=test_name_TMB)) +
+  geom_density(alpha=.25)
 
 ```
 

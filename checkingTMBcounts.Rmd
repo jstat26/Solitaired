@@ -5,10 +5,6 @@ output:
     code_folding: hide
     toc: yes
     toc_float: yes
-params:
-  data_SOL: "default"
-  data_TMB: "default"
-  date: "default"
 ---
 
 ```{r setup, include=FALSE}
@@ -18,10 +14,9 @@ library(tidyverse)
 library(jsonlite) #we use this package to parse the JSON columns
 library(kableExtra)
 
-data_SOL <- params$data_SOL
-data_TMB <- params$data_TMB
-date <- params$date
-
+data_SOL <- read_csv("In/Solitaired/researchstudy-9-5-24-12-32 PM.csv")
+data_TMB <- read_csv("In/TMB/solitairecog_data_20240904185255.csv")
+  
 ```
 
 # Introduction
